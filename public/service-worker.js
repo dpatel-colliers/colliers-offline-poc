@@ -3,8 +3,20 @@ importScripts(
 );
 
 if (workbox) {
-  console.log(`Yay! Workbox is loaded 🎉`);
+  console.log('Workbox is loaded');
 
+  // Cache static assets (CSS, JS, images) using Cache First
+  workbox.routing.registerRoute(
+    ({ request }) =>
+      request.destination === 'style' ||
+      request.destination === 'script' ||
+      request.destination === 'image',
+    new workbox.strategies.CacheFirst({
+      cacheName: 'static-resources',
+    })
+  );
+
+  // Cache API responses with Network First (fallback to cache)
   workbox.routing.registerRoute(
     ({ url }) =>
       url.origin === 'https://colliers-offline-poc.netlify.app' &&
@@ -20,6 +32,14 @@ if (workbox) {
       ],
     })
   );
+
+  // Optional: Cache HTML fallback for offline navigation
+  workbox.routing.registerRoute(
+    ({ request }) => request.mode === 'navigate',
+    new workbox.strategies.NetworkFirst({
+      cacheName: 'html-cache',
+    })
+  );
 } else {
-  console.log(`Workbox didn't load 😬`);
+  console.log('Workbox failed to load');
 }
