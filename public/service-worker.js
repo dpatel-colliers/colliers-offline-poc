@@ -27,7 +27,7 @@ if (workbox) {
       plugins: [
         new workbox.expiration.ExpirationPlugin({
           maxEntries: 100,
-          maxAgeSeconds: 60 * 60 * 24 * 7, // 7 days
+          maxAgeSeconds: 60 * 60 * 24 * 7,
         }),
       ],
     })
@@ -43,3 +43,17 @@ if (workbox) {
 } else {
   console.log('Workbox failed to load');
 }
+
+workbox.routing.registerRoute(
+  ({ request }) => request.mode === 'navigate',
+  new workbox.strategies.NetworkFirst({
+    cacheName: 'html-cache',
+    networkTimeoutSeconds: 10,
+    plugins: [
+      new workbox.expiration.ExpirationPlugin({
+        maxEntries: 10,
+        maxAgeSeconds: 60 * 60 * 24 * 7, 
+      }),
+    ],
+  })
+);
