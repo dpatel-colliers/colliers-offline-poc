@@ -1,18 +1,29 @@
 import axios from 'axios';
-const BASE_URL = 'https://688126ca66a7eb81224a3c8f.mockapi.io/';
+import Dexie from 'dexie';
 
-const api = axios.create({
-    baseURL: BASE_URL,
-    config: {
-        'Content-Type': 'application/json',
-    }
+const db = new Dexie('ColliersOfflineDB');
+db.version(1).stores({
+  messages: '++id,message,createdAt',
 });
 
-api.interceptors.request.use(
-    (config) => {
-        return config;
-    },
-    (error) => Promise.reject(error)
-);
+const api = axios.create({
+  baseURL: 'https://688126ca66a7eb81224a3c8f.mockapi.io',
+});
 
-export default api;
+export const postMessage = async (message) => {
+  const payload = {
+    message,
+    createdAt: new Date().toISOString(),
+  };
+
+  if (navigator.onLine) {
+    const response = await api.post('/messages', payload);
+    return response.data;
+  } else {
+    await db.messages.add(payload);
+    return { ...payload, offlineSaved: true };
+  }
+};
+
+export const getOfflineMessages = () => db.messages.toArray();
+export const clearOfflineMessages = () => db.messages.clear();
